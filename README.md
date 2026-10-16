@@ -11,6 +11,7 @@ La demo se guarda en el almacenamiento local del navegador con la clave `aligner
 ## Flujo
 
 - **Mi clínica:** avanzar por tandas, con cantidades y piezas independientes para cada arco.
+- **Fabricación completa:** desde la tarjeta de un caso, seleccionar varias piezas y dejarlas listas en una sola operación. Si una falla, se marca la etapa exacta para rehacerla; las tandas por fase siguen disponibles.
 - **Otras clínicas:** completar alineadores y contenciones, registrar despacho y marcar la entrega. El caso aparece en **Archivadas** desde el despacho; queda disponible para confirmar la recepción y para abrir otra etapa después.
 - **Reperfilado posterior:** buscar el caso en **Archivados** y elegir **Nueva etapa**. Conserva el código, las piezas y la actividad previa; las etapas adicionales se numeran consecutivamente y vuelven al taller como un caso activo.
 - **Identificación:** cada pieza incluye etapa, arco y número (`E1-SUP-3`, `RP2-INF-2`, `RP3-SUP-1`). Los intentos quedan asociados a su pieza.
