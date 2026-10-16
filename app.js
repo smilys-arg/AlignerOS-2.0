@@ -606,15 +606,16 @@
     byId('directWorkEyebrow').textContent = `${c.mode === 'own' ? 'MI CLÍNICA' : 'ORDEN EXTERNA'} · ${c.code}`;
     byId('directWorkTitle').textContent = `Completar piezas · ${c.patient}`;
     byId('directWorkHelp').textContent = 'Seleccioná las piezas que vas a fabricar completas. Si alguna falla, marcá en qué etapa para dejarla identificada y pendiente de rehacer.';
-    byId('directWorkFields').innerHTML = [['upper', 'Superior'], ['lower', 'Inferior']].map(([arch, label]) => {
+    const archGroups = [['upper', 'Superior'], ['lower', 'Inferior']].map(([arch, label]) => {
       const pieces = units.filter(item => item.arch === arch);
       if (!pieces.length) return '';
       return `<fieldset class="work-arch direct-work-arch"><legend>${label} · ${pieces.length} piezas</legend><div class="aligner-batch-list">${pieces.map(item => {
         const fromStage = Math.max(0, item.stage);
         const options = [`<option value="complete">Completar</option>`, ...STAGES.slice(fromStage).map((stage, offset) => `<option value="${fromStage + offset}">Rehacer en ${stage}</option>`)].join('');
-        return `<div class="aligner-batch-row"><label><input type="checkbox" class="direct-item" data-aligner-id="${item.id}" checked><strong>${item.id}</strong><small>${phaseLabel(item.phase, item)} · ${STAGES[item.stage]}</small></label><select class="direct-result" data-aligner-id="${item.id}" aria-label="Resultado de ${item.id}">${options}</select></div>`;
+        return `<div class="aligner-batch-row"><label><input type="checkbox" class="direct-item" data-aligner-id="${item.id}"><strong>${item.id}</strong><small>${phaseLabel(item.phase, item)} · ${STAGES[item.stage]}</small></label><select class="direct-result" data-aligner-id="${item.id}" aria-label="Resultado de ${item.id}">${options}</select></div>`;
       }).join('')}</div></fieldset>`;
     }).join('');
+    byId('directWorkFields').innerHTML = `<div class="batch-selection-tools"><span>Seleccioná las piezas de esta tanda</span><div><button type="button" class="button button-quiet" data-direct-select="all">Todas</button><button type="button" class="button button-quiet" data-direct-select="none">Ninguna</button></div></div>${archGroups}`;
     byId('directWorkSubmit').disabled = false;
     updateDirectMaterialInfo();
     openModal('directWorkBackdrop');
@@ -750,6 +751,13 @@
   byId('workForm').addEventListener('input', updateWorkMaterialInfo);
   byId('directWorkForm').addEventListener('submit', saveDirectWork);
   byId('directWorkFields').addEventListener('change', updateDirectMaterialInfo);
+  byId('directWorkFields').addEventListener('click', event => {
+    const button = event.target.closest('[data-direct-select]');
+    if (!button) return;
+    const checked = button.dataset.directSelect === 'all';
+    byId('directWorkFields').querySelectorAll('.direct-item').forEach(input => { input.checked = checked; });
+    updateDirectMaterialInfo();
+  });
   byId('workFields').addEventListener('click', event => {
     const button = event.target.closest('[data-batch-select]');
     if (!button) return;
