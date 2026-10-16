@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7f5">
+  <title>AlignerOS · Taller</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="overrides.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <a class="brand" href="#inicio" aria-label="AlignerOS inicio">
+        <span class="brand-mark"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M8 11c2.6-4 17.4-4 20 0l-2 13c-.4 2.6-2.6 4-5 3l-3-2-3 2c-2.4 1-4.6-.4-5-3L8 11Z"/><path d="M12 14c3-2 9-2 12 0"/></svg></span>
+        <span><strong>AlignerOS</strong><small>Taller · vista operativa</small></span>
+      </a>
+      <div class="nav-caption">ESPACIO DE TRABAJO</div>
+      <nav class="nav-list">
+        <button class="nav-item active" data-view="inicio"><span class="nav-icon">⌂</span><span>Resumen</span></button>
+        <button class="nav-item" data-view="propios"><span class="nav-icon">◉</span><span>Mi clínica</span><span class="nav-count" id="ownNavCount">0</span></button>
+        <button class="nav-item" data-view="externos"><span class="nav-icon">⇄</span><span>Otras clínicas</span><span class="nav-count" id="externalNavCount">0</span></button>
+        <button class="nav-item" data-view="produccion"><span class="nav-icon">▦</span><span>Producción</span></button>
+        <button class="nav-item" data-view="materiales"><span class="nav-icon">◈</span><span>Materiales</span></button>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-guard"><span class="guard-dot"></span><span><strong>Modo de prueba</strong><small>Datos locales · sin conexión a tu base</small></span></div>
+      <button class="sidebar-help" id="resetDemoBtn">Restablecer datos de muestra</button>
+      <div class="sidebar-footer"><span class="avatar">AL</span><span><strong>Laboratorio</strong><small>Operación local</small></span><span class="more">···</span></div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>Espacio de trabajo</span><b>/</b><strong id="pageTitle">Resumen</strong></div>
+        <div class="top-actions">
+          <label class="searchbox"><span>⌕</span><input id="globalSearch" type="search" placeholder="Buscar paciente o código" autocomplete="off"><kbd>⌘ K</kbd></label>
+          <button class="button button-quiet undo-button" id="undoBtn" disabled title="Deshacer el último cambio">↶</button>
+          <button class="button button-primary" id="newCaseBtn"><span>＋</span> Nuevo caso</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-inicio">
+        <div class="welcome-row"><div><p class="eyebrow" id="dashboardDate"></p><h1>El taller, bajo control.</h1></div><div class="welcome-tag"><span class="live-dot"></span> Jornada en curso</div></div>
+        <div class="stat-grid" id="dashboardStats"></div>
+        <div class="dashboard-grid">
+          <section class="panel focus-panel">
+            <div class="panel-heading"><div><p class="eyebrow">SIGUIENTE</p><h2>Próximas tareas</h2></div><button class="text-button" data-open-view="produccion">Ver cola <span>↗</span></button></div>
+            <div id="nextActions" class="next-actions"></div>
+          </section>
+          <section class="panel stock-glance-panel">
+            <div class="panel-heading"><div><p class="eyebrow">RECURSOS</p><h2>Materiales a vigilar</h2></div><button class="icon-link" data-open-view="materiales" aria-label="Ver materiales">↗</button></div>
+            <div id="stockGlance"></div>
+          </section>
+        </div>
+        <section class="panel split-summary">
+          <div class="panel-heading"><div><p class="eyebrow">CARGA DE TRABAJO</p><h2>Dos ritmos, un solo taller</h2></div></div>
+          <div class="work-mode-grid" id="workModeSummary"></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-propios">
+        <div class="view-heading"><div><h1>Mi clínica</h1></div><button class="button button-primary" data-new-mode="own">＋ Nuevo caso</button></div>
+        <div class="mode-note own-note"><span class="mode-symbol">◉</span><div><strong>Mi producción</strong><p>Tandas por arco</p></div><span class="note-metric" id="ownPendingMetric">—</span></div>
+        <div class="toolbar"><div class="segmented" id="ownFilters"><button class="selected" data-filter="all">Todos</button><button data-filter="active">Activos</button><button data-filter="ready">Control</button><button data-filter="archived">Archivados</button></div><span class="toolbar-meta" id="ownResultCount"></span></div>
+        <div class="case-grid" id="ownCases"></div>
+      </section>
+
+      <section class="view" id="view-externos">
+        <div class="view-heading"><div><h1>Otras clínicas</h1></div><button class="button button-primary" data-new-mode="external">＋ Nueva orden</button></div>
+        <div class="mode-note external-note"><span class="mode-symbol">⇄</span><div><strong>Órdenes externas</strong><p>Se archivan al despachar</p></div><span class="note-metric" id="externalPendingMetric">—</span></div>
+        <div class="toolbar"><div class="segmented" id="externalFilters"><button class="selected" data-filter="all">Todas</button><button data-filter="production">En taller</button><button data-filter="ready">Para enviar</button><button data-filter="archived">Archivadas</button></div><span class="toolbar-meta" id="externalResultCount"></span></div>
+        <div class="case-grid" id="externalCases"></div>
+      </section>
+
+      <section class="view" id="view-produccion">
+        <div class="view-heading"><div><h1>Producción</h1></div><div class="production-legend"><span><i class="legend-dot own"></i>Mi clínica</span><span><i class="legend-dot external"></i>Otras</span></div></div>
+        <div class="production-tabs" id="productionTabs"><button class="selected" data-production="all">Todo</button><button data-production="own">Mi clínica</button><button data-production="external">Otras clínicas</button></div>
+        <div class="production-layout"><div class="production-list" id="productionList"></div><aside class="panel production-side"><p class="eyebrow">FLUJO</p><div class="flow-mini"><span>Etapa</span><b>›</b><span>Reperfilado</span><b>›</b><span>Contención</span></div></aside></div>
+      </section>
+
+      <section class="view" id="view-materiales">
+        <div class="view-heading"><div><h1>Materiales</h1></div><div class="heading-actions"><button class="button button-quiet" id="resetDemoFromStock">Restablecer demo</button><button class="button button-primary" id="restockBtn">＋ Reponer</button></div></div>
+        <div class="stock-summary" id="stockSummary"></div>
+        <div class="stock-layout"><section class="panel"><div class="panel-heading"><div><h2>Existencias</h2><p class="stock-rule-note">Consumo por espesor</p></div></div><div class="stock-list" id="stockList"></div></section><section class="panel ledger-panel"><div class="panel-heading"><div><h2>Movimientos</h2></div></div><div id="movementLedger"></div></section></div>
+      </section>
+      <footer class="app-footer"><span>AlignerOS · demo local</span></footer>
+    </main>
+  </div>
+
+  <nav class="mobile-nav" aria-label="Navegación móvil">
+    <button class="active" data-view="inicio"><span>⌂</span><span>Inicio</span></button>
+    <button data-view="propios"><span>◉</span><span>Mi clínica</span></button>
+    <button data-view="externos"><span>⇄</span><span>Otras</span></button>
+    <button data-view="produccion"><span>▦</span><span>Taller</span></button>
+    <button data-view="materiales"><span>◈</span><span>Stock</span></button>
+  </nav>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" id="mainModal">
+      <div class="modal-header"><div><p class="eyebrow" id="modalEyebrow">NUEVO CASO</p><h2 id="modalTitle">Crear caso</h2></div><button class="icon-button" id="closeModal" aria-label="Cerrar">×</button></div>
+      <form id="caseForm">
+        <input type="hidden" id="caseId">
+        <div class="form-grid">
+          <label class="field field-wide">Paciente<input id="patientName" required maxlength="70" placeholder="Nombre y apellido"></label>
+          <label class="field">Clínica / doctor<input id="clinicName" required maxlength="70" placeholder="Nombre de clínica o doctor"></label>
+          <label class="field">Código de orden<input id="orderCode" maxlength="24" placeholder="Se genera automáticamente"></label>
+          <label class="field">Entrega estimada<input id="dueDate" type="date" required></label>
+          <label class="field">Alineadores superiores<input id="upperCount" type="number" min="0" max="240" step="1" value="12" required></label>
+          <label class="field">Alineadores inferiores<input id="lowerCount" type="number" min="0" max="240" step="1" value="12" required></label>
+          <label class="field check-field"><input id="upperZero" type="checkbox"><span>Agregar alineador 0 superior <small>Ataches · lámina de 0,5 mm</small></span></label>
+          <label class="field check-field"><input id="lowerZero" type="checkbox"><span>Agregar alineador 0 inferior <small>Ataches · lámina de 0,5 mm</small></span></label>
+          <label class="field field-wide">Notas<textarea id="caseNotes" rows="3" maxlength="500" placeholder="Opcional"></textarea></label>
+        </div>
+        <div class="form-info" id="formModeInfo"></div>
+        <div class="modal-actions"><button type="button" class="button button-quiet" id="cancelModal">Cancelar</button><button class="button button-primary" type="submit" id="saveCaseBtn">Crear caso</button></div>
+      </form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="reprofileBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="reprofileTitle"><div class="modal-header"><div><p class="eyebrow">NUEVA ETAPA</p><h2 id="reprofileTitle">Agregar reperfilado</h2><p class="lead" id="reprofilePatient"></p></div><button class="icon-button" data-close-modal="reprofileBackdrop" aria-label="Cerrar">×</button></div>
+      <form id="reprofileForm"><input type="hidden" id="reprofileCaseId"><div class="form-grid"><label class="field">Superior<input id="reprofileUpperCount" type="number" min="0" max="240" step="1" value="0" required></label><label class="field">Inferior<input id="reprofileLowerCount" type="number" min="0" max="240" step="1" value="0" required></label><label class="field check-field"><input id="reprofileUpperZero" type="checkbox"><span>Alineador 0 superior <small>Ataches · 0,5 mm</small></span></label><label class="field check-field"><input id="reprofileLowerZero" type="checkbox"><span>Alineador 0 inferior <small>Ataches · 0,5 mm</small></span></label></div><div class="modal-actions"><button type="button" class="button button-quiet" data-close-modal="reprofileBackdrop">Cancelar</button><button class="button button-primary" type="submit">Agregar etapa</button></div></form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="workBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="workTitle"><div class="modal-header"><div><p class="eyebrow" id="workEyebrow">PRODUCCIÓN</p><h2 id="workTitle">Registrar tanda</h2></div><button class="icon-button" data-close-modal="workBackdrop" aria-label="Cerrar">×</button></div>
+      <form id="workForm"><input type="hidden" id="workCaseId"><input type="hidden" id="workStage">
+        <p id="workHelp" class="form-info"></p><div class="form-grid" id="workFields"></div><div class="form-info" id="workMaterialInfo"></div>
+        <div class="modal-actions"><button type="button" class="button button-quiet" data-close-modal="workBackdrop">Cancelar</button><button class="button button-primary" type="submit" id="workSubmit">Guardar tanda</button></div>
+      </form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="confirmBackdrop" hidden>
+    <section class="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle"><div class="confirm-symbol">↗</div><p class="eyebrow">CONFIRMAR AVANCE</p><h2 id="confirmTitle">¿Avanzar producción?</h2><p id="confirmBody"></p><div class="confirm-actions"><button class="button button-quiet" id="confirmCancel">Volver</button><button class="button button-primary" id="confirmAccept">Confirmar avance</button></div></section>
+  </div>
+  <div class="modal-backdrop" id="restockBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="restockTitle"><div class="modal-header"><div><p class="eyebrow">INVENTARIO</p><h2 id="restockTitle">Registrar reposición</h2></div><button class="icon-button" data-close-modal="restockBackdrop" aria-label="Cerrar">×</button></div>
+      <form id="restockForm"><div class="form-grid"><label class="field field-wide">Material<select id="restockMaterial" required></select></label><label class="field">Cantidad recibida<input id="restockQuantity" type="number" min="1" step="1" required></label><label class="field">Nota<input id="restockNote" maxlength="100" placeholder="Opcional"></label></div><div class="modal-actions"><button type="button" class="button button-quiet" data-close-modal="restockBackdrop">Cancelar</button><button class="button button-primary" type="submit">Sumar al stock</button></div></form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="shipmentBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="shipmentTitle"><div class="modal-header"><div><p class="eyebrow">SALIDA DEL TALLER</p><h2 id="shipmentTitle">Registrar envío</h2></div><button class="icon-button" data-close-modal="shipmentBackdrop" aria-label="Cerrar">×</button></div>
+      <form id="shipmentForm"><input type="hidden" id="shipmentCaseId"><div class="form-grid"><label class="field">Transporte / mensajería<input id="shipmentCarrier" maxlength="60" placeholder="Retira en el laboratorio"></label><label class="field">Guía / seguimiento<input id="shipmentTracking" maxlength="60" placeholder="Opcional"></label><label class="field field-wide">Nota de envío<input id="shipmentNote" maxlength="120" placeholder="Opcional"></label></div><div class="form-info" id="shipmentMaterialInfo">Se registrará la fecha de salida. Podrás marcar la orden como entregada después.</div><div class="modal-actions"><button type="button" class="button button-quiet" data-close-modal="shipmentBackdrop">Cancelar</button><button class="button button-primary" id="shipmentSubmit" type="submit">Registrar despacho</button></div></form>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
+
