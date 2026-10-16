@@ -129,6 +129,11 @@
       </form>
     </section>
   </div>
+  <div class="modal-backdrop" id="directWorkBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="directWorkTitle"><div class="modal-header"><div><p class="eyebrow" id="directWorkEyebrow">FABRICACIÓN COMPLETA</p><h2 id="directWorkTitle">Completar de una vez</h2></div><button class="icon-button" data-close-modal="directWorkBackdrop" aria-label="Cerrar">×</button></div>
+      <form id="directWorkForm"><input type="hidden" id="directWorkCaseId"><p id="directWorkHelp" class="form-info"></p><div class="direct-work-fields" id="directWorkFields"></div><div class="form-info" id="directWorkInfo"></div><div class="modal-actions"><button type="button" class="button button-quiet" data-close-modal="directWorkBackdrop">Cancelar</button><button class="button button-primary" type="submit" id="directWorkSubmit">Dejar listas</button></div></form>
+    </section>
+  </div>
   <div class="modal-backdrop" id="confirmBackdrop" hidden>
     <section class="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle"><div class="confirm-symbol">↗</div><p class="eyebrow">CONFIRMAR AVANCE</p><h2 id="confirmTitle">¿Avanzar producción?</h2><p id="confirmBody"></p><div class="confirm-actions"><button class="button button-quiet" id="confirmCancel">Volver</button><button class="button button-primary" id="confirmAccept">Confirmar avance</button></div></section>
   </div>
