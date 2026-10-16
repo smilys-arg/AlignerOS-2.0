@@ -319,6 +319,8 @@
     const targetText = `${c.upperCount} sup. · ${c.lowerCount} inf.${c.includeZeroUpper ? ' · SUP-0' : ''}${c.includeZeroLower ? ' · INF-0' : ''}`;
     const work = ensureWork(c);
     const ready = work.upper.pending[3] + work.lower.pending[3];
+    const directWorkButton = !caseComplete(c) && !c.shipment
+      ? `<button class="button button-direct" onclick="window.AlignOS.direct('${c.id}')">Completar de una vez</button>` : '';
     const addPhaseButton = caseComplete(c) && c.shipment?.status !== 'transit'
       ? `<button class="button button-primary" onclick="window.AlignOS.reprofile('${c.id}')">＋ Nueva etapa</button>` : '';
     const actionButtons = c.shipment?.status === 'transit'
@@ -338,7 +340,7 @@
     const oldDeliveries = c.shipmentHistory?.length ? `<details class="case-history"><summary>Entregas previas · ${c.shipmentHistory.length}</summary><div class="case-history-list">${c.shipmentHistory.slice().reverse().map(item => `<div><time>${fmtDate(item.date)}</time><span>${escapeHtml(item.carrier || 'Sin transporte')}${item.tracking ? ` · ${escapeHtml(item.tracking)}` : ''}</span></div>`).join('')}</div></details>` : '';
     const reworkIds = pendingReworkIds(c);
     const reworkNotice = reworkIds.length ? `<div class="case-rework-alert"><strong>Rehacer:</strong> ${escapeHtml(reworkIds.slice(0, 8).join(', '))}${reworkIds.length > 8 ? ` · +${reworkIds.length - 8} más en el detalle` : ''}</div>` : '';
-    return `<article class="case-card ${isOwn ? '' : 'external'}"><div class="case-card-top"><div class="case-identity"><div class="case-code">${escapeHtml(c.code)} · ${isOwn ? 'MI CLÍNICA' : 'OTRA CLÍNICA'}</div><div class="case-name">${escapeHtml(c.patient)}</div><div class="case-clinic">${escapeHtml(c.clinic)} · ${escapeHtml(archNames(c))}</div></div><div class="case-date"><div class="date-label">ENTREGA</div><div class="date-value ${p.days < 0 ? 'overdue' : p.days <= 3 ? 'soon' : ''}">${escapeHtml(p.label)}</div></div></div><div class="case-tags"><span class="tag">${targetText}</span>${c.archived ? '<span class="tag status-ready">Archivado</span>' : ''}${c.treatmentStages?.length > 1 ? `<span class="tag">${c.treatmentStages.length} etapas</span>` : ''}</div><div class="case-progress"><div class="progress-top"><span>${escapeHtml(statusText)}${caseComplete(c) ? '' : ` · ${escapeHtml(progressSummary(c))}`}</span><strong>${progress}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div></div>${reworkNotice}<div class="case-actions"><div class="case-action-buttons">${actionButtons}${addPhaseButton}<button class="button button-quiet" onclick="window.AlignOS.edit('${c.id}')">Editar</button></div></div>${c.shipment ? `<div class="case-clinic" style="margin-top:8px">${c.shipment.status === 'delivered' ? 'Entregada' : `Despachada ${fmtDate(c.shipment.date)}`}${c.shipment.carrier ? ` · ${escapeHtml(c.shipment.carrier)}` : ''}${c.shipment.tracking ? ` · Guía ${escapeHtml(c.shipment.tracking)}` : ''}</div>` : ''}${c.notes ? `<div class="case-clinic" style="margin-top:8px">${escapeHtml(c.notes)}</div>` : ''}${oldDeliveries}${renderAlignerLedger(c)}${history}</article>`;
+    return `<article class="case-card ${isOwn ? '' : 'external'}"><div class="case-card-top"><div class="case-identity"><div class="case-code">${escapeHtml(c.code)} · ${isOwn ? 'MI CLÍNICA' : 'OTRA CLÍNICA'}</div><div class="case-name">${escapeHtml(c.patient)}</div><div class="case-clinic">${escapeHtml(c.clinic)} · ${escapeHtml(archNames(c))}</div></div><div class="case-date"><div class="date-label">ENTREGA</div><div class="date-value ${p.days < 0 ? 'overdue' : p.days <= 3 ? 'soon' : ''}">${escapeHtml(p.label)}</div></div></div><div class="case-tags"><span class="tag">${targetText}</span>${c.archived ? '<span class="tag status-ready">Archivado</span>' : ''}${c.treatmentStages?.length > 1 ? `<span class="tag">${c.treatmentStages.length} etapas</span>` : ''}</div><div class="case-progress"><div class="progress-top"><span>${escapeHtml(statusText)}${caseComplete(c) ? '' : ` · ${escapeHtml(progressSummary(c))}`}</span><strong>${progress}%</strong></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div></div>${reworkNotice}<div class="case-actions"><div class="case-action-buttons">${actionButtons}${directWorkButton}${addPhaseButton}<button class="button button-quiet" onclick="window.AlignOS.edit('${c.id}')">Editar</button></div></div>${c.shipment ? `<div class="case-clinic" style="margin-top:8px">${c.shipment.status === 'delivered' ? 'Entregada' : `Despachada ${fmtDate(c.shipment.date)}`}${c.shipment.carrier ? ` · ${escapeHtml(c.shipment.carrier)}` : ''}${c.shipment.tracking ? ` · Guía ${escapeHtml(c.shipment.tracking)}` : ''}</div>` : ''}${c.notes ? `<div class="case-clinic" style="margin-top:8px">${escapeHtml(c.notes)}</div>` : ''}${oldDeliveries}${renderAlignerLedger(c)}${history}</article>`;
   }
 
   function pendingReworkIds(c) {
@@ -595,6 +597,83 @@
     closeModal('workBackdrop'); saveState(); renderAll(); showToast(`${workLabel} registrada · ${moved} avanzan${rework ? ` · ${rework} para rehacer` : ''}${retentionUnlocked ? ' · contenciones habilitadas' : ''}`);
   }
 
+  function directWork(id) {
+    const c = safeCase(id);
+    if (!c || c.shipment || caseComplete(c)) return;
+    const units = (c.aligners || []).filter(item => !item.superseded && item.stage >= 0 && item.stage < STAGES.length);
+    if (!units.length) return showToast('No hay piezas listas para fabricar');
+    byId('directWorkCaseId').value = id;
+    byId('directWorkEyebrow').textContent = `${c.mode === 'own' ? 'MI CLÍNICA' : 'ORDEN EXTERNA'} · ${c.code}`;
+    byId('directWorkTitle').textContent = `Completar piezas · ${c.patient}`;
+    byId('directWorkHelp').textContent = 'Seleccioná las piezas que vas a fabricar completas. Si alguna falla, marcá en qué etapa para dejarla identificada y pendiente de rehacer.';
+    byId('directWorkFields').innerHTML = [['upper', 'Superior'], ['lower', 'Inferior']].map(([arch, label]) => {
+      const pieces = units.filter(item => item.arch === arch);
+      if (!pieces.length) return '';
+      return `<fieldset class="work-arch direct-work-arch"><legend>${label} · ${pieces.length} piezas</legend><div class="aligner-batch-list">${pieces.map(item => {
+        const fromStage = Math.max(0, item.stage);
+        const options = [`<option value="complete">Completar</option>`, ...STAGES.slice(fromStage).map((stage, offset) => `<option value="${fromStage + offset}">Rehacer en ${stage}</option>`)].join('');
+        return `<div class="aligner-batch-row"><label><input type="checkbox" class="direct-item" data-aligner-id="${item.id}" checked><strong>${item.id}</strong><small>${phaseLabel(item.phase, item)} · ${STAGES[item.stage]}</small></label><select class="direct-result" data-aligner-id="${item.id}" aria-label="Resultado de ${item.id}">${options}</select></div>`;
+      }).join('')}</div></fieldset>`;
+    }).join('');
+    byId('directWorkSubmit').disabled = false;
+    updateDirectMaterialInfo();
+    openModal('directWorkBackdrop');
+  }
+
+  function updateDirectMaterialInfo() {
+    const c = safeCase(byId('directWorkCaseId').value);
+    if (!c) return;
+    const selected = [...byId('directWorkFields').querySelectorAll('.direct-item:checked')];
+    const selectedUnits = selected.map(input => c.aligners.find(item => item.id === input.dataset.alignerId)).filter(Boolean);
+    const thermoformIds = new Set(selectedUnits.filter(item => {
+      const result = byId('directWorkFields').querySelector(`.direct-result[data-aligner-id="${item.id}"]`)?.value;
+      return item.stage <= 1 && result !== '0';
+    }).map(item => item.id));
+    const needs = thermoformIds.size ? materialNeeds(c, thermoformIds) : [];
+    const lines = needs.map(({ stock, need }) => stock ? `${quantityText(need, stock.unit)} de ${stock.name}` : `${need} lámina(s) de material no configurado`);
+    const shortage = needs.find(({ stock, need }) => !stock || stock.qty < need);
+    byId('directWorkInfo').textContent = !selected.length ? 'Seleccioná al menos una pieza.'
+      : needs.length ? `Consumo al termoformar: ${lines.join(' · ')}. ${shortage ? `Falta stock de ${shortage.stock?.name || 'material de termoformado'}.` : `Disponible para esta tanda.`}`
+        : 'Las piezas ya pasaron por termoformado o se rehacen en impresión; no se descuenta material en esta tanda.';
+    byId('directWorkSubmit').disabled = !selected.length || !!shortage;
+  }
+
+  function saveDirectWork(event) {
+    event.preventDefault();
+    const c = safeCase(byId('directWorkCaseId').value);
+    if (!c || c.shipment || caseComplete(c)) return showToast('El caso cambió; actualizá la tarjeta y volvé a abrir la fabricación');
+    const selected = [...byId('directWorkFields').querySelectorAll('.direct-item:checked')];
+    if (!selected.length) return showToast('Seleccioná al menos una pieza');
+    const outcomes = selected.map(input => ({ item: c.aligners.find(item => item.id === input.dataset.alignerId), result: byId('directWorkFields').querySelector(`.direct-result[data-aligner-id="${input.dataset.alignerId}"]`)?.value }));
+    if (outcomes.some(({ item, result }) => !item || item.superseded || item.stage < 0 || item.stage >= STAGES.length || (result !== 'complete' && (!Number.isInteger(Number(result)) || Number(result) < item.stage || Number(result) >= STAGES.length)))) return showToast('Una pieza cambió; volvé a abrir la fabricación para actualizar la selección');
+    const thermoformIds = new Set(outcomes.filter(({ item, result }) => item.stage <= 1 && result !== '0').map(({ item }) => item.id));
+    const needs = thermoformIds.size ? materialNeeds(c, thermoformIds) : [];
+    const shortage = needs.find(({ stock, need }) => !stock || stock.qty < need);
+    if (shortage) return showToast(`Stock insuficiente de ${shortage.stock?.name || 'material de termoformado'}`);
+    pushUndo();
+    for (const { stock, need } of needs) consumeSheets(stock.id, need, `${c.code} · fabricación completa · ${thermoformIds.size} piezas (${outcomes.filter(row => thermoformIds.has(row.item.id)).map(row => row.item.id).join(', ')})`);
+    const completed = []; const failures = [];
+    for (const { item, result } of outcomes) {
+      item.attempts ||= [0, 0, 0, 0]; item.events ||= [];
+      const failAt = result === 'complete' ? null : Number(result);
+      for (let stage = Math.max(0, item.stage); stage < STAGES.length; stage++) {
+        const outcome = stage === failAt ? 'rework' : 'good';
+        item.attempts[stage] = (item.attempts[stage] || 0) + 1;
+        item.events.push({ date: new Date().toISOString(), stage, outcome, attempt: item.attempts[stage] });
+        if (outcome === 'rework') { item.stage = stage; failures.push(`${item.id} · ${STAGES[stage]}`); break; }
+        item.stage = stage + 1;
+      }
+      if (item.stage >= STAGES.length) completed.push(item.id);
+    }
+    c.hasProductionActivity = true;
+    advanceTreatmentFlow(c);
+    if (c.mode === 'own' && caseComplete(c)) c.archived = true;
+    const usedText = needs.map(({ stock, need }) => `${quantityText(need, stock.unit)} ${stock.name}`).join(' · ');
+    recordEvent(c, `Fabricación completa · ${completed.length} listas${completed.length ? ` (${completed.join(', ')})` : ''}${failures.length ? ` · rehacer ${failures.join(', ')}` : ''}${usedText ? ` · ${usedText}` : ''}`);
+    closeModal('directWorkBackdrop'); saveState(); renderAll();
+    showToast(`${completed.length} piezas listas${failures.length ? ` · ${failures.length} para rehacer` : ''}${usedText ? ` · ${usedText}` : ''}`);
+  }
+
   function openShipment(id) {
     const c = safeCase(id); if (!c) return;
     byId('shipmentCaseId').value = id; byId('shipmentCarrier').value = ''; byId('shipmentTracking').value = ''; byId('shipmentNote').value = '';
@@ -669,6 +748,8 @@
   byId('reprofileForm').addEventListener('submit', saveReprofiling);
   byId('workForm').addEventListener('submit', saveWork);
   byId('workForm').addEventListener('input', updateWorkMaterialInfo);
+  byId('directWorkForm').addEventListener('submit', saveDirectWork);
+  byId('directWorkFields').addEventListener('change', updateDirectMaterialInfo);
   byId('workFields').addEventListener('click', event => {
     const button = event.target.closest('[data-batch-select]');
     if (!button) return;
@@ -698,7 +779,7 @@
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); byId('globalSearch').focus(); }
     if (event.key === 'Escape') document.querySelectorAll('.modal-backdrop:not([hidden])').forEach(modal => closeModal(modal.id));
   });
-  window.AlignOS = { action, process: processCase, edit: id => openCaseModal('own', id), restock: openRestock, reprofile: openReprofileModal };
+  window.AlignOS = { action, process: processCase, direct: directWork, edit: id => openCaseModal('own', id), restock: openRestock, reprofile: openReprofileModal };
 
   const hashView = location.hash.replace('#', '');
   showView(['inicio', 'propios', 'externos', 'produccion', 'materiales'].includes(hashView) ? hashView : 'inicio');
